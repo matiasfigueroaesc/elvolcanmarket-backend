@@ -1,5 +1,5 @@
-# El Volcán Market — infraestructura local
-# Levanta MySQL con un schema por microservicio.
+# El Volcán Market — MySQL para el perfil "mysql" (opcional).
+# Sin Docker también funciona: el perfil por defecto es H2 y no necesita nada instalado.
 # Uso: copiar .env.example a .env y ejecutar `docker compose up -d`.
 
 services:
@@ -9,8 +9,8 @@ services:
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      # Lo usa el script de init para crear volcan_usuarios, volcan_catalogo, etc.
+      MYSQL_APP_PASSWORD: ${MYSQL_APP_PASSWORD}
       TZ: America/Santiago
     ports:
       - "${MYSQL_PORT:-3306}:3306"
