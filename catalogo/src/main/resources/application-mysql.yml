@@ -1,0 +1,6 @@
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/volcan_catalogo?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=America/Santiago&characterEncoding=UTF-8}
+    username: ${DB_USER:volcan_catalogo}
+    password: ${DB_PASSWORD:volcan123}
+    driver-class-name: com.mysql.cj.jdbc.Driver
