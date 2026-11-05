@@ -1,0 +1,6 @@
+# Normaliza saltos de línea. Los .sh DEBEN quedar con LF aunque se clonen en
+# Windows: con CRLF el contenedor de MySQL no puede ejecutarlos.
+* text=auto
+*.sh text eol=lf
+mvnw text eol=lf
+*.cmd text eol=crlf
