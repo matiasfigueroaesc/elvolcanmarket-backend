@@ -14,7 +14,7 @@ El frontend llama **solo al Gateway** (8080), que reenvía cada petición al mic
 |---|---:|---|---|---|---|
 | `gateway` | 8080 | — | Rutas, CORS y Swagger agregado | Matías | ✅ |
 | `common` | — | — | Biblioteca compartida: errores JSON, seguridad JWT, OpenAPI (**no** es microservicio) | Matías | ✅ |
-| `usuarios` | 8081 | `volcan_usuarios` | Registro, login, JWT, refresh y CRUD de usuarios | Renato | Esqueleto |
+| `usuarios` | 8081 | `volcan_usuarios` | Registro, login, JWT, refresh y CRUD de usuarios | Renato | ✅ |
 | `catalogo` | 8082 | `volcan_catalogo` | Productos, categorías, ofertas y stock | Matías | ✅ |
 | `ventas` | 8083 | `volcan_ventas` | Boletas y detalle de boleta | Fabián | Esqueleto |
 | `despacho` | 8084 | `volcan_despacho` | Estado de los pedidos y zonas | Fabián | Esqueleto |
@@ -121,6 +121,32 @@ Base: `http://localhost:8080/api/v1`. Todas las respuestas son JSON, incluidos l
 | DELETE | `/categorias/{id}` | ADMIN | Eliminar (409 si tiene productos) |
 
 Los nombres de los campos son los mismos que usa el frontend (`codigo`, `precioOferta`, `stockCritico`, `categoriaId`, `unidad`…), así los componentes de React no cambian.
+
+## API de usuarios
+
+Base: `http://localhost:8080/api/v1`. Los campos son los mismos de `src/data/usuarios.js` del frontend (`run`, `nombre`, `apellidos`, `correo`, `telefono`, `fechaNacimiento`, `tipo`, `region`, `comuna`, `direccion`). La respuesta **nunca** trae la contraseña.
+
+| Método | Ruta | Acceso | Descripción |
+|---|---|---|---|
+| POST | `/auth/login` | Público* | `{ "correo", "password" }` → `{ accessToken, expiresIn, usuario }` + cookie `ev_refresh` |
+| POST | `/auth/registro` | Público | Crea siempre un `cliente` (201). 409 si el correo o el RUN ya existen |
+| POST | `/auth/refresh` | Público* | Usa la cookie, entrega un JWT nuevo y rota el refresh |
+| POST | `/auth/logout` | Público* | Invalida el refresh y borra la cookie (204) |
+| GET | `/auth/me` | Con sesión | Datos del usuario del token |
+| GET | `/auth/jwks` | Público | Clave pública RSA para validar el JWT |
+| GET | `/usuarios?texto=&tipo=` | ADMIN | Lista con filtros opcionales |
+| GET | `/usuarios/{id}` | ADMIN | Detalle |
+| POST | `/usuarios` | ADMIN | Crear de cualquier tipo (201) |
+| PUT | `/usuarios/{id}` | ADMIN | Editar. `password` vacío = no cambiarla. El RUN no cambia |
+| DELETE | `/usuarios/{id}` | ADMIN | Borrado lógico (204). No se puede eliminar la propia cuenta ni el último administrador |
+
+\* Login, refresh y logout exigen el encabezado `X-Requested-With: ElVolcanMarket` (protección CSRF, porque usan cookie). Desde React con `fetch` hay que enviar también `credentials: "include"` para que viaje la cookie.
+
+`tipo` del frontend → rol del JWT: `administrador` → `ADMIN`, `vendedor` → `VENDEDOR`, `cliente` → `CLIENTE`.
+
+Usuarios de prueba (los mismos del frontend): `javiera.munoz@gmail.com` / `admin1234` (administrador), `pedro.salinas@duoc.cl` / `vendedor1234` (vendedor), `camila.toro@gmail.com` / `cliente1234` (cliente).
+
+Las claves RSA se generan solas la primera vez en `data/keys/` (no se suben a Git). Si las borras, los tokens emitidos antes dejan de servir y hay que volver a iniciar sesión.
 
 ## Contratos entre servicios (para usuarios y ventas)
 
