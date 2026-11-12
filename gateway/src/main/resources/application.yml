@@ -1,0 +1,32 @@
+server:
+  port: ${PORT:8080}
+
+spring:
+  application:
+    name: gateway
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+# Swagger agregado: http://localhost:8080/swagger-ui.html (elegir el servicio arriba a la derecha)
+springdoc:
+  swagger-ui:
+    urls:
+      - name: Usuarios y autenticación
+        url: /openapi/usuarios
+      - name: Catálogo (productos, categorías, stock)
+        url: /openapi/catalogo
+      - name: Ventas (boletas)
+        url: /openapi/ventas
+      - name: Despacho
+        url: /openapi/despacho
+
+app:
+  usuarios-url: ${USUARIOS_URL:http://localhost:8081}
+  catalogo-url: ${CATALOGO_URL:http://localhost:8082}
+  ventas-url: ${VENTAS_URL:http://localhost:8083}
+  despacho-url: ${DESPACHO_URL:http://localhost:8084}
+  allowed-origins: ${FRONTEND_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}

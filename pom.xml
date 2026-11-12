@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  POM padre de El Volcán Market.
+  Define UNA sola vez la versión de Spring Boot, Spring Cloud y Java,
+  y la lista de módulos. Cada módulo hereda esta configuración.
+  Compilar y probar todo desde esta carpeta:  ./mvnw verify  (Windows: mvnw.cmd verify)
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.5.16</version>
+    <relativePath/>
+  </parent>
+
+  <groupId>cl.elvolcan</groupId>
+  <artifactId>elvolcanmarket-backend</artifactId>
+  <version>1.0.0</version>
+  <packaging>pom</packaging>
+  <name>El Volcán Market - Backend</name>
+
+  <properties>
+    <java.version>17</java.version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <spring-cloud.version>2025.0.3</spring-cloud.version>
+    <springdoc.version>2.10.0</springdoc.version>
+  </properties>
+
+  <modules>
+    <module>common</module>
+    <module>usuarios</module>
+    <module>catalogo</module>
+    <module>ventas</module>
+    <module>despacho</module>
+    <module>gateway</module>
+  </modules>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-dependencies</artifactId>
+        <version>${spring-cloud.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+</project>

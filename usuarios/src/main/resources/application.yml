@@ -1,0 +1,24 @@
+server:
+  port: ${PORT:8081}
+
+spring:
+  application:
+    name: usuarios
+  profiles:
+    # h2 = base de archivo, no necesita instalar nada. Para MySQL: --spring.profiles.active=mysql
+    default: h2
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+app:
+  issuer: ${JWT_ISSUER:elvolcan-usuarios}
+  jwks: ${AUTH_JWKS_URL:http://localhost:8081/api/v1/auth/jwks}
+  gateway-url: ${GATEWAY_URL:http://localhost:8080}
