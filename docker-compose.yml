@@ -1,6 +1,41 @@
-# El Volcán Market — MySQL para el perfil "mysql" (opcional).
-# Sin Docker también funciona: el perfil por defecto es H2 y no necesita nada instalado.
-# Uso: copiar .env.example a .env y ejecutar `docker compose up -d`.
+# ============================================================
+# El Volcán Market — todo el sistema en Docker (local y AWS EC2)
+#
+#   cp .env.example .env            (Windows: copy .env.example .env)
+#   docker compose up -d --build                    -> solo backend (Gateway en :8080)
+#   docker compose --profile web up -d --build      -> backend + frontend (tienda en :80)
+#   docker compose up -d mysql                      -> solo MySQL, para correr los .jar a mano
+#
+# Para el frontend, el repo "elvolcanmarket" debe estar clonado AL LADO de este:
+#   proyectos/
+#   ├── elvolcanmarket/           (React)
+#   └── elvolcanmarket-backend/   (este repo)
+# (o indicar otra carpeta con FRONTEND_DIR en el .env)
+#
+# Cada microservicio usa el perfil "mysql" y SU base (volcan_usuarios, volcan_catalogo...),
+# con un usuario MySQL que solo puede tocar esa base. Se usa un único servidor MySQL con
+# 4 bases (y no 4 servidores) para que todo quepa en una sola máquina EC2.
+# ============================================================
+
+x-servicio: &servicio
+  build:
+    context: .
+  restart: unless-stopped
+  depends_on:
+    mysql:
+      condition: service_healthy
+  environment: &entorno
+    SPRING_PROFILES_ACTIVE: mysql
+    # Memoria máxima de cada Java: 5 servicios x 256 MB caben en una EC2 de 4 GB.
+    JAVA_TOOL_OPTIONS: "-Xms64m -Xmx256m -XX:+UseSerialGC"
+    TZ: America/Santiago
+    # Validación del JWT: la clave pública se pide a usuarios por la red interna.
+    AUTH_JWKS_URL: http://usuarios:8081/api/v1/auth/jwks
+    JWT_ISSUER: elvolcan-usuarios
+    # Swagger usa la misma dirección desde la que se abre (local o IP pública de AWS).
+    GATEWAY_URL: "/"
+    INTERNAL_API_KEY: ${INTERNAL_API_KEY:?Falta INTERNAL_API_KEY en el archivo .env}
+    DB_PASSWORD: ${MYSQL_APP_PASSWORD:?Falta MYSQL_APP_PASSWORD en el archivo .env}
 
 services:
   mysql:
@@ -8,12 +43,13 @@ services:
     container_name: volcan-mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Falta MYSQL_ROOT_PASSWORD en el archivo .env}
       # Lo usa el script de init para crear volcan_usuarios, volcan_catalogo, etc.
       MYSQL_APP_PASSWORD: ${MYSQL_APP_PASSWORD}
       TZ: America/Santiago
+    # Solo accesible desde este computador (Workbench/DBeaver), nunca desde internet.
     ports:
-      - "${MYSQL_PORT:-3306}:3306"
+      - "127.0.0.1:${MYSQL_PORT:-3306}:3306"
     volumes:
       - mysql-data:/var/lib/mysql
       # Los scripts de esta carpeta corren solo la PRIMERA vez (volumen vacío).
@@ -21,11 +57,100 @@ services:
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
+    # "Sano" recién cuando la última base creada por el script acepta conexiones por TCP
+    # (durante la inicialización MySQL no escucha en la red).
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
+      test: ["CMD-SHELL", "MYSQL_PWD=\"$$MYSQL_APP_PASSWORD\" mysql -h 127.0.0.1 -u volcan_despacho -D volcan_despacho -e 'SELECT 1'"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 40s
+
+  usuarios:
+    <<: *servicio
+    build:
+      context: .
+      args: { MODULE: usuarios }
+    environment:
+      <<: *entorno
+      PORT: 8081
+      DB_URL: jdbc:mysql://mysql:3306/volcan_usuarios?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=America/Santiago&characterEncoding=UTF-8
+      DB_USER: volcan_usuarios
+      # Las claves RSA se guardan en un volumen: sobreviven a reinicios y los tokens siguen válidos.
+      KEYS_DIRECTORY: /app/data/keys
+      # Sin HTTPS (EC2 con http) la cookie no puede ser "Secure".
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      FRONTEND_ORIGINS: ${FRONTEND_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin1234}
+      VENDEDOR_PASSWORD: ${VENDEDOR_PASSWORD:-vendedor1234}
+      CLIENTE_PASSWORD: ${CLIENTE_PASSWORD:-cliente1234}
+    volumes:
+      - usuarios-keys:/app/data
+
+  catalogo:
+    <<: *servicio
+    build:
+      context: .
+      args: { MODULE: catalogo }
+    environment:
+      <<: *entorno
+      PORT: 8082
+      DB_URL: jdbc:mysql://mysql:3306/volcan_catalogo?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=America/Santiago&characterEncoding=UTF-8
+      DB_USER: volcan_catalogo
+
+  ventas:
+    <<: *servicio
+    build:
+      context: .
+      args: { MODULE: ventas }
+    environment:
+      <<: *entorno
+      PORT: 8083
+      DB_URL: jdbc:mysql://mysql:3306/volcan_ventas?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=America/Santiago&characterEncoding=UTF-8
+      DB_USER: volcan_ventas
+      CATALOGO_URL: http://catalogo:8082
+
+  despacho:
+    <<: *servicio
+    build:
+      context: .
+      args: { MODULE: despacho }
+    environment:
+      <<: *entorno
+      PORT: 8084
+      DB_URL: jdbc:mysql://mysql:3306/volcan_despacho?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=America/Santiago&characterEncoding=UTF-8
+      DB_USER: volcan_despacho
+
+  # Única puerta de entrada al backend. Los microservicios no publican puertos:
+  # solo se ven entre ellos por la red interna de Docker.
+  gateway:
+    build:
+      context: .
+      args: { MODULE: gateway }
+    restart: unless-stopped
+    depends_on: [usuarios, catalogo, ventas, despacho]
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx256m -XX:+UseSerialGC"
+      TZ: America/Santiago
+      USUARIOS_URL: http://usuarios:8081
+      CATALOGO_URL: http://catalogo:8082
+      VENTAS_URL: http://ventas:8083
+      DESPACHO_URL: http://despacho:8084
+      FRONTEND_ORIGINS: ${FRONTEND_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}
+    ports:
+      - "${GATEWAY_PORT:-8080}:8080"
+
+  # Frontend React (build de producción servido por nginx). Solo con --profile web.
+  # nginx reenvía /api y Swagger al Gateway, así el navegador ve una sola dirección.
+  frontend:
+    profiles: [web]
+    build:
+      context: ${FRONTEND_DIR:-../elvolcanmarket}
+    restart: unless-stopped
+    depends_on: [gateway]
+    ports:
+      - "${WEB_PORT:-80}:80"
 
 volumes:
   mysql-data:
+  usuarios-keys:
