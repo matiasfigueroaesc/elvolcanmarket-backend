@@ -50,7 +50,31 @@ Recorrido de una petición: **controller → service → repository → base de 
 - **JDK 17 o superior** (`java -version`)
 - No hace falta instalar Maven: se usa `mvnw` / `mvnw.cmd`
 - Internet la primera vez (descarga de dependencias)
-- MySQL o Docker **solo** si quieres usar el perfil `mysql`
+- Docker Desktop para levantar todo con MySQL (forma de presentación y de AWS)
+
+## Levantar todo con Docker (MySQL + microservicios + frontend)
+
+Es la forma de presentación y la misma que se usa en AWS. Los dos repos deben estar uno al lado del otro:
+
+```
+proyectos/
+├── elvolcanmarket/           (frontend React)
+└── elvolcanmarket-backend/   (este repo)
+```
+
+```bash
+cp .env.example .env                           # Windows: copy .env.example .env
+docker compose --profile web up -d --build     # la primera vez tarda ~10 min
+docker compose --profile web ps                # mysql "healthy", el resto "running"
+```
+
+- Tienda: http://localhost
+- Swagger: http://localhost/swagger-ui.html (o http://localhost:8080/swagger-ui.html)
+
+Sin `--profile web` se levanta solo el backend (Gateway en :8080), por ejemplo para usar el front con `npm run dev`.
+Cada microservicio corre con el perfil `mysql` y su propia base. Ver `Dockerfile` y `docker-compose.yml`.
+
+**Despliegue en AWS (Learner Lab, una EC2):** [docs/DESPLIEGUE_AWS.md](docs/DESPLIEGUE_AWS.md).
 
 ## Compilar y probar
 
@@ -86,7 +110,7 @@ Prueba rápida, con catálogo y gateway arriba:
 
 1. Crear las bases y usuarios, **una de dos**:
    - **Sin Docker:** ejecutar `sql/01_crear_bases_mysql.sql` como root en MySQL Workbench.
-   - **Con Docker:** `cp .env.example .env` (Windows: `copy`) y `docker compose up -d`.
+   - **Con Docker (solo la base):** `cp .env.example .env` (Windows: `copy`) y `docker compose up -d mysql`.
 2. Iniciar cada servicio con el perfil:
    ```bash
    java -jar catalogo/target/catalogo-1.0.0.jar --spring.profiles.active=mysql
@@ -96,9 +120,9 @@ Cada servicio se conecta con su propio usuario (`volcan_catalogo`, etc.), que so
 
 | Docker | Comando |
 |---|---|
-| Detener (mantiene los datos) | `docker compose stop` |
+| Detener (mantiene los datos) | `docker compose --profile web stop` |
 | Consola SQL | `docker exec -it volcan-mysql mysql -u volcan_catalogo -p` |
-| Borrar todo y partir de cero | `docker compose down -v` |
+| Borrar todo y partir de cero | `docker compose --profile web down -v` |
 
 ## API del catálogo
 
