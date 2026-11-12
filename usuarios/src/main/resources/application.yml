@@ -22,3 +22,15 @@ app:
   issuer: ${JWT_ISSUER:elvolcan-usuarios}
   jwks: ${AUTH_JWKS_URL:http://localhost:8081/api/v1/auth/jwks}
   gateway-url: ${GATEWAY_URL:http://localhost:8080}
+  allowed-origins: ${FRONTEND_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
+  # Duración del access token (JWT): 15 minutos
+  access-seconds: ${ACCESS_TOKEN_SECONDS:900}
+  # Claves RSA del JWT (se crean solas la primera vez; data/ no se sube a Git)
+  keys-directory: ${KEYS_DIRECTORY:./data/keys}
+  # true en producción (HTTPS); en local se usa http
+  cookie-secure: ${COOKIE_SECURE:false}
+  # Contraseñas de los usuarios de prueba (las mismas del frontend)
+  seed:
+    admin-password: ${ADMIN_PASSWORD:admin1234}
+    vendedor-password: ${VENDEDOR_PASSWORD:vendedor1234}
+    cliente-password: ${CLIENTE_PASSWORD:cliente1234}
