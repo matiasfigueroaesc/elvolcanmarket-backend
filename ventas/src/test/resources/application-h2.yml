@@ -6,3 +6,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create-drop
+
+app:
+  # En las pruebas la tarea programada se apaga; el reintento se prueba llamando al servicio.
+  reintentos: false
