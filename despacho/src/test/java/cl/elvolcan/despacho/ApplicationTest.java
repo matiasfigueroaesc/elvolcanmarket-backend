@@ -10,7 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
-/** Prueba mínima del esqueleto: el servicio arranca y responde su estado de salud. */
+/** Prueba mínima: el servicio arranca, responde su estado de salud y cierra las rutas no declaradas. */
 @ActiveProfiles("h2")
 @SpringBootTest(properties = "spring.datasource.url=jdbc:h2:mem:despacho-test")
 @AutoConfigureMockMvc
