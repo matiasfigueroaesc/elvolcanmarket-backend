@@ -23,9 +23,13 @@ public class Venta {
   @Column(nullable = false, length = 2000)
   public String huella;
 
-  /** Respuesta entregada la primera vez, en JSON. */
+  /**
+   * Respuesta entregada la primera vez, en JSON. El length es obligatorio: sin él Hibernate
+   * crea la columna como TINYTEXT en MySQL (máx. 255 caracteres) y toda compra falla con
+   * "Data too long". Con 1.000.000 queda como MEDIUMTEXT (hasta 16 MB).
+   */
   @Lob
-  @Column(nullable = false)
+  @Column(nullable = false, length = 1_000_000)
   public String comprobante;
 
   public Venta() {}
