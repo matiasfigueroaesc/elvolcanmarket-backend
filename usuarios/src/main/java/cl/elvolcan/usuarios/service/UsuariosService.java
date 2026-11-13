@@ -68,8 +68,9 @@ public class UsuariosService {
 
   /**
    * Editar no cambia el RUN (identifica al usuario; en el frontend el campo es readOnly).
-   * Contraseña vacía = se mantiene la actual. Al editar se cierran sus sesiones, para que
-   * un cambio de tipo (rol) se aplique en el próximo inicio de sesión.
+   * Contraseña vacía = se mantiene la actual. Si cambia el tipo (rol) o la contraseña se
+   * cierran sus sesiones, para que el cambio se aplique en el próximo inicio de sesión.
+   * Editar solo datos personales no cierra la sesión.
    */
   @Transactional
   public UsuarioResponse editar(Long id, UsuarioRequest datos) {
@@ -82,15 +83,17 @@ public class UsuariosService {
         && usuarios.countByTipoAndActivoTrue(TipoUsuario.ADMINISTRADOR) <= 1)
       throw new ApiException(409, "Debe existir al menos un administrador.");
 
+    boolean cerrarSesiones = !u.tipo.equals(datos.tipo());
     String password = datos.password();
     if (password != null && !password.isEmpty()) {
       if (password.length() < 4)
         throw new ApiException(400, "La contraseña debe tener entre 4 y 20 caracteres.");
       u.passwordHash = passwords.encode(password);
+      cerrarSesiones = true;
     }
     u.correo = correo;
     copiar(datos, u);
-    sesiones.deleteByUsuarioId(id);
+    if (cerrarSesiones) sesiones.deleteByUsuarioId(id);
     return AuthService.vista(usuarios.saveAndFlush(u));
   }
 

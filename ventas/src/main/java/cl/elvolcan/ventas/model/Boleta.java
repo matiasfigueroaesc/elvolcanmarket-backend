@@ -36,6 +36,14 @@ public class Boleta {
   @Column(unique = true, length = 20)
   public String numero;
 
+  /**
+   * Clave única de la venta para el catálogo (POST /internal/v1/ventas/{clave}).
+   * Es un UUID y no el id: si la base de ventas se reinicia, los ids vuelven a empezar en 1
+   * y el catálogo confundiría la venta nueva con una antigua.
+   */
+  @Column(unique = true, length = 36)
+  public String claveVenta;
+
   @Column(nullable = false)
   public Instant fecha;
 
