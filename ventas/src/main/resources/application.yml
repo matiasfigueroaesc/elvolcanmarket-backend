@@ -24,4 +24,9 @@ app:
   gateway-url: ${GATEWAY_URL:http://localhost:8080}
   # Para descontar stock: POST {catalogo-url}/internal/v1/ventas/{boletaId} con X-Internal-Key
   catalogo-url: ${CATALOGO_URL:http://localhost:8082}
+  # Para crear el despacho al confirmar el pago: POST {despacho-url}/internal/v1/despachos
+  despacho-url: ${DESPACHO_URL:http://localhost:8084}
+  # Misma clave interna para catálogo y despacho (X-Internal-Key)
   internal-key: ${INTERNAL_API_KEY:local-cambiar-clave-interna-32-caracteres}
+  # Cada cuánto se reintenta avisar a despacho las boletas pagadas que no alcanzó a registrar
+  reintento-despacho-ms: ${REINTENTO_DESPACHO_MS:60000}
