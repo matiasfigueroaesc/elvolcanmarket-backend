@@ -108,7 +108,10 @@ services:
       PORT: 8083
       DB_URL: jdbc:mysql://mysql:3306/volcan_ventas?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=America/Santiago&characterEncoding=UTF-8
       DB_USER: volcan_ventas
+      # Ventas llama directo (sin Gateway) al catálogo para descontar stock y a despacho
+      # para crear el pedido al confirmar el pago.
       CATALOGO_URL: http://catalogo:8082
+      DESPACHO_URL: http://despacho:8084
 
   despacho:
     <<: *servicio
