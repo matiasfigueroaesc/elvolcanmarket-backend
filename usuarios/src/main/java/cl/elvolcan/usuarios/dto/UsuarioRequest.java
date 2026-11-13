@@ -24,6 +24,7 @@ public record UsuarioRequest(
         String apellidos,
     @NotBlank(message = "El correo es obligatorio.")
         @Email(message = "Ingresa un correo válido.")
+        @Size(max = 120, message = "El correo admite hasta 120 caracteres.")
         @Pattern(regexp = Reglas.CORREO, flags = Pattern.Flag.CASE_INSENSITIVE, message = Reglas.MENSAJE_CORREO)
         String correo,
     @Size(max = 20, message = "La contraseña debe tener entre 4 y 20 caracteres.") String password,

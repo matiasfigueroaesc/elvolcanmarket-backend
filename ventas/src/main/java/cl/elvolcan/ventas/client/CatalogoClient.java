@@ -39,15 +39,15 @@ public class CatalogoClient {
 
   /**
    * Descuenta el stock y devuelve las líneas con el precio real.
-   * Si se corta la red se reintenta una vez: el catálogo es idempotente por boletaId,
+   * Si se corta la red se reintenta una vez: el catálogo es idempotente por la clave de la venta,
    * así que repetir la llamada nunca descuenta dos veces.
    */
-  public CatalogoVenta vender(Long boletaId, List<CatalogoItem> items) {
+  public CatalogoVenta vender(String claveVenta, List<CatalogoItem> items) {
     try {
-      return enviarVenta(boletaId, items);
+      return enviarVenta(claveVenta, items);
     } catch (ResourceAccessException primera) {
       try {
-        return enviarVenta(boletaId, items);
+        return enviarVenta(claveVenta, items);
       } catch (ResourceAccessException segunda) {
         throw new ApiException(
             503, "No pudimos confirmar el stock en este momento. Intenta nuevamente.");
@@ -55,9 +55,9 @@ public class CatalogoClient {
     }
   }
 
-  private CatalogoVenta enviarVenta(Long boletaId, List<CatalogoItem> items) {
+  private CatalogoVenta enviarVenta(String claveVenta, List<CatalogoItem> items) {
     return http.post()
-        .uri("/internal/v1/ventas/{id}", boletaId)
+        .uri("/internal/v1/ventas/{clave}", claveVenta)
         .contentType(MediaType.APPLICATION_JSON)
         .body(items)
         .retrieve()

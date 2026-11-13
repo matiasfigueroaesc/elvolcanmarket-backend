@@ -229,7 +229,7 @@ Datos de fábrica: las 5 zonas del front y las 2 órdenes de Camila (`ORD-000001
 - Access token de 15 minutos + refresh token en cookie HttpOnly (igual que el proyecto del profe).
 
 **Descuento de stock (ventas → catálogo):**
-- `POST http://localhost:8082/internal/v1/ventas/{boletaId}` con el encabezado `X-Internal-Key` (variable `INTERNAL_API_KEY`).
+- `POST http://localhost:8082/internal/v1/ventas/{claveVenta}` (UUID único de cada venta) con el encabezado `X-Internal-Key` (variable `INTERNAL_API_KEY`).
 - Cuerpo: `[{ "id": 4, "cantidad": 2 }, ...]`.
 - Respuesta: `{ "lineas": [{ "id", "codigo", "nombre", "precio", "cantidad", "imagen" }], "total": 79980 }`. El **precio lo fija el catálogo** (aplica la oferta); ventas copia estas líneas en `DETALLE_BOLETA`.
 - Es todo o nada (409 si falta stock y no se descuenta nada) e idempotente (repetir la misma boleta no descuenta dos veces).

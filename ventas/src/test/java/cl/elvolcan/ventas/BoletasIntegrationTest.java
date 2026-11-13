@@ -4,8 +4,8 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.matchesPattern;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -74,7 +74,7 @@ class BoletasIntegrationTest {
 
   /** El catálogo responde con el precio de oferta del cilindro de 45 kg. */
   void catalogoVende() {
-    when(catalogo.vender(anyLong(), anyList()))
+    when(catalogo.vender(anyString(), anyList()))
         .thenReturn(
             new CatalogoVenta(
                 List.of(new CatalogoLinea(4L, "CL004", "Cilindro GLP 45 kg", 39990, 2,
@@ -100,7 +100,7 @@ class BoletasIntegrationTest {
         .andExpect(jsonPath("$.estadoPago").value("pagado"))
         .andExpect(jsonPath("$.estado").value("recibido"));
 
-    verify(catalogo).vender(anyLong(), org.mockito.ArgumentMatchers.eq(List.of(new CatalogoItem(4L, 2))));
+    verify(catalogo).vender(anyString(), org.mockito.ArgumentMatchers.eq(List.of(new CatalogoItem(4L, 2))));
     verify(despacho).registrar(any(DespachoNuevo.class));
   }
 
@@ -133,13 +133,13 @@ class BoletasIntegrationTest {
         .andExpect(jsonPath("$.total").value(79980))
         .andExpect(jsonPath("$.estado").doesNotExist());
 
-    verify(catalogo, never()).vender(anyLong(), anyList());
+    verify(catalogo, never()).vender(anyString(), anyList());
     verify(despacho, never()).registrar(any());
   }
 
   @Test
   void sinStockDevuelve409YNoQuedaBoletaAMedias() throws Exception {
-    when(catalogo.vender(anyLong(), anyList()))
+    when(catalogo.vender(anyString(), anyList()))
         .thenThrow(new ApiException(409, "Stock insuficiente de Cilindro GLP 45 kg (disponible: 1)."));
     mvc.perform(post("/api/v1/boletas").contentType("application/json").content(CHECKOUT))
         .andExpect(status().isConflict())
@@ -183,7 +183,7 @@ class BoletasIntegrationTest {
                 .contentType("application/json")
                 .content(CHECKOUT.replace("\"cantidad\":2", "\"cantidad\":0")))
         .andExpect(status().isBadRequest());
-    verify(catalogo, never()).vender(anyLong(), anyList());
+    verify(catalogo, never()).vender(anyString(), anyList());
   }
 
   @Test

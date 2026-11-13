@@ -22,6 +22,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,7 +82,7 @@ public class BoletasService {
   private void armarPagada(Boleta b, List<ItemRequest> items) {
     List<CatalogoItem> pedido =
         items.stream().map(i -> new CatalogoItem(i.id(), i.cantidad())).toList();
-    CatalogoVenta venta = catalogo.vender(b.id, pedido);
+    CatalogoVenta venta = catalogo.vender(b.claveVenta, pedido);
     for (CatalogoLinea l : venta.lineas())
       b.agregar(new DetalleBoleta(l.id(), l.codigo(), l.nombre(), l.precio(), l.cantidad(), l.imagen()));
     b.total = venta.total();
@@ -182,6 +183,7 @@ public class BoletasService {
     Boleta b = new Boleta();
     b.fecha = Instant.now();
     b.usuarioId = usuarioId;
+    b.claveVenta = UUID.randomUUID().toString();
     b.clienteNombre = d.cliente().nombre().trim();
     b.clienteApellidos = d.cliente().apellidos().trim();
     b.clienteCorreo = d.cliente().correo().trim().toLowerCase(Locale.ROOT);
