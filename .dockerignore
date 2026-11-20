@@ -1,0 +1,8 @@
+# No se copian a la imagen: compilados, datos locales, secretos ni Git.
+**/target
+**/data
+.git
+.idea
+.vscode
+.env
+*.log

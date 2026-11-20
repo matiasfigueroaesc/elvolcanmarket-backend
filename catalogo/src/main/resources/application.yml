@@ -1,0 +1,28 @@
+server:
+  port: ${PORT:8082}
+
+spring:
+  application:
+    name: catalogo
+  profiles:
+    # h2 = base de archivo, no necesita instalar nada. Para MySQL: --spring.profiles.active=mysql
+    default: h2
+  jpa:
+    open-in-view: false
+    hibernate:
+      # Crea/actualiza las tablas a partir de las entidades (@Entity)
+      ddl-auto: update
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+app:
+  # Datos para validar el JWT que emite el servicio usuarios
+  issuer: ${JWT_ISSUER:elvolcan-usuarios}
+  jwks: ${AUTH_JWKS_URL:http://localhost:8081/api/v1/auth/jwks}
+  gateway-url: ${GATEWAY_URL:http://localhost:8080}
+  # Clave que ventas debe enviar en X-Internal-Key para descontar stock
+  internal-key: ${INTERNAL_API_KEY:local-cambiar-clave-interna-32-caracteres}

@@ -1,18 +1,20 @@
 #!/bin/bash
-# Crea un schema por microservicio y le da permisos al usuario de la app.
+# Crea una base y un usuario por microservicio (como el ejemplo del profe:
+# cada servicio solo puede tocar SU base).
 # MySQL lo ejecuta solo la primera vez que se crea el volumen.
 # Las TABLAS no se crean aquí: las crea cada microservicio con JPA.
 set -e
 
-SCHEMAS="volcan_auth volcan_usuarios volcan_catalogo volcan_inventario volcan_ventas volcan_despacho"
+SERVICIOS="usuarios catalogo ventas despacho"
 
-for schema in $SCHEMAS; do
-  echo "Creando schema ${schema}..."
+for s in $SERVICIOS; do
+  echo "Creando base y usuario volcan_${s}..."
   mysql -u root -p"${MYSQL_ROOT_PASSWORD}" <<SQL
-CREATE DATABASE IF NOT EXISTS \`${schema}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-GRANT ALL PRIVILEGES ON \`${schema}\`.* TO '${MYSQL_USER}'@'%';
+CREATE DATABASE IF NOT EXISTS \`volcan_${s}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER IF NOT EXISTS 'volcan_${s}'@'%' IDENTIFIED BY '${MYSQL_APP_PASSWORD}';
+GRANT ALL PRIVILEGES ON \`volcan_${s}\`.* TO 'volcan_${s}'@'%';
 SQL
 done
 
 mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "FLUSH PRIVILEGES;"
-echo "Schemas listos."
+echo "Bases listas."

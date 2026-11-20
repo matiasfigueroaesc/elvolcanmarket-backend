@@ -1,6 +1,10 @@
 # Variables locales (contraseñas)
 .env
 
+# Bases H2 de archivo y claves JWT generadas al ejecutar (no se suben)
+data/
+**/data/
+
 # Maven
 target/
 !.mvn/wrapper/maven-wrapper.jar
